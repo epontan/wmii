@@ -87,12 +87,8 @@ class Client(object):
             raise
 
     def _cleanup(self):
-        try:
-            for f in self.files:
-                f.close()
-        finally:
-            self.mux.fd.close()
-            self.mux = None
+        self.mux.fd.close()
+        self.mux = None
 
     def _dorpc(self, req, callback=None, error=None):
         def doresp(resp):
