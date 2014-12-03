@@ -1,11 +1,13 @@
 from functools import partial, update_wrapper, wraps
 import os
+from os.path import join, sep
 import signal
 import subprocess
 
 import pygmi
 
-__all__ = 'call', 'message', 'program_list', 'curry', 'find_script', '_', 'prop'
+__all__ = ('call', 'message', 'program_list', 'curry', 'find_script', '_',
+           'prop', 'find')
 
 def _():
     pass
@@ -66,5 +68,24 @@ def prop(**kwargs):
         kwargs['fget'] = wrapped
         return property(**kwargs)
     return prop_
+
+def find(path, target, depth=-1, followlinks=False):
+    if hasattr(target, 'search'):
+        def _re_check(files):
+            for f in files:
+                if target.search(f): return f
+        check = _re_check
+    else:
+        def _fixed_check(files):
+            if target in files: return target
+        check = _fixed_check
+    initial_depth = len(path)
+    for root, dirs, files in os.walk(path, followlinks=followlinks):
+        f = check(files)
+        if f:
+            return join(root, f)
+        if root[initial_depth:].count(sep) == depth:
+            dirs[:] = []
+    return None
 
 # vim:se sts=4 sw=4 et:
