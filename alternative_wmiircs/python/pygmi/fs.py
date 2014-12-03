@@ -12,6 +12,7 @@ __all__ = ('wmii', 'Tags', 'Tag', 'Area', 'Frame', 'Client',
 
 spacere = re.compile(r'\s')
 sentinel = {}
+indexed_bar = set()
 
 def tounicode(obj):
     if isinstance(obj, str):
@@ -586,8 +587,25 @@ class Button(Ctl):
         self.base_path = self.sides[side]
         self.ctl_path = '%s/%s' % (self.base_path, self.name)
         self.ctl_file = None
-        if colors or label:
-            self.create(colors, label)
+        if side in indexed_bar and not self.exists and not re.search(
+                r'^(!|\d+_)', self.name):
+            index = self.get_index()
+            self.real_name = '%02d_%s' % (index, self.name)
+            self.ctl_path = '%s/%s' % (self.base_path, self.real_name)
+        else:
+            self.real_name = self.name
+        self.create(colors, label)
+
+    def get_index(self):
+        index = -1
+        for s in client.readdir(self.base_path):
+            m = re.match(r'(\d+)_(.*)', s.name)
+            if m:
+                index = int(m.group(1))
+                name = m.group(2)
+                if name == self.name:
+                    return index
+        return index + 1
 
     def create(self, colors=None, label=None):
         if not self.ctl_file:
@@ -604,7 +622,7 @@ class Button(Ctl):
 
     @property
     def exists(self):
-        return bool(self.file.stat() if self.file else client.stat(self.ctl_path))
+        return bool(self.ctl_file.stat() if self.ctl_file else client.stat(self.ctl_path))
 
     @classmethod
     def all(cls, side):
