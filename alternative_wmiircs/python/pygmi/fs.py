@@ -507,6 +507,10 @@ class Tag(Dir):
         frame = self.framespec(frame)
         self['grow'] = '%s %s %s' % (frame, dir, str(amount or ''))
 
+    def set_urgent(self, urgent=True):
+        self.urgent = urgent
+    urgent = False
+
 class Color(utf8):
     def __init__(self, colors):
         if isinstance(colors, Color):
@@ -787,13 +791,16 @@ class wmii(Ctl):
 class Tags(object):
     PREV = []
     NEXT = []
+    LAST = '1'
 
-    def __init__(self, normcol=None, focuscol=None):
+    def __init__(self, normcol=None, focuscol=None, urgentcol=None):
         self.ignore = set()
         self.tags = {}
+        self.urgent_tags = []
         self.sel = None
         self.normcol = normcol
         self.focuscol = focuscol
+        self.urgentcol = urgentcol
         self.lastselect = datetime.now()
         for t in wmii.tags:
             self.add(t)
@@ -816,10 +823,26 @@ class Tags(object):
         self.sel = self.tags[tag]
         self.sel.button.colors = self.focuscol or wmii.cache['focuscolors']
     def unfocus(self, tag):
-        self.tags[tag].button.colors = self.normcol or wmii.cache['normcolors']
+        if self.tags[tag].urgent:
+            colors = self.urgentcol or wmii.cache['urgentcolors']
+        else:
+            colors = self.normcol or wmii.cache['normcolors']
+        self.tags[tag].button.colors = colors
+        self.LAST = tag
 
     def set_urgent(self, tag, urgent=True):
-        self.tags[tag].button.label = urgent and '*' + tag or tag
+        if self.sel.id == tag:
+            colors = self.focuscol or wmii.cache['focuscolors']
+        elif urgent:
+            colors = self.urgentcol or wmii.cache['urgentcolors']
+        else:
+            colors = self.normcol or wmii.cache['normcolors']
+        if urgent and tag not in self.urgent_tags:
+            self.urgent_tags.append(tag)
+        elif not urgent and tag in self.urgent_tags:
+            self.urgent_tags.remove(tag)
+        self.tags[tag].button.colors = colors
+        self.tags[tag].set_urgent(urgent)
 
     def next(self, reverse=False):
         tags = [t for t in wmii.tags if t not in self.ignore]
@@ -830,6 +853,10 @@ class Tags(object):
             if tags[i] == self.sel.id:
                 return tags[i+1]
         return self.sel
+
+    def select_urgent(self):
+        if len(self.urgent_tags) > 0:
+            self.select(self.urgent_tags[0])
 
     def select(self, tag, take_client=None):
         def goto(tag):
