@@ -329,6 +329,8 @@ class Actions(object):
     leading underscores in their names are treated as callable actions.
     """
     def __getattr__(self, name):
+        if not name:
+            return _
         if name.startswith('_') or name.endswith('_'):
             raise AttributeError()
         if hasattr(self, name + '_'):
