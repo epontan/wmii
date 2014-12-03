@@ -34,18 +34,29 @@ class Match(object):
         """
         self.args = args
         self.matchers = []
+        str_repr = []
         for a in args:
             if a is _:
+                str_repr.append('_')
                 a = lambda k: True
             elif isinstance(a, basestring):
+                str_repr.append('"%s"' % a)
                 a = a.__eq__
             elif isinstance(a, (list, tuple, set)):
+                for s in a:
+                    str_repr.append('"%s"' % s)
                 a = (lambda ary: (lambda k: k in ary))(a)
             elif hasattr(a, 'search'):
+                str_repr.append('r"%s"' % a.pattern)
                 a = a.search
             else:
+                str_repr.append(str(a))
                 a = str(a).__eq__
             self.matchers.append(a)
+        # Use null char to make it nicely printable, but also
+        # practically to avoid possible collision
+        self.str_repr = '%s(%s)' % (self.__class__.__name__,
+                ',\x00 '.join(str_repr))
 
     def match(self, string):
         """
@@ -55,6 +66,15 @@ class Match(object):
         ary = string.split(' ', len(self.matchers))
         if all(m(a) for m, a in zip(self.matchers, ary)):
             return ary
+
+    def __str__(self):
+        return self.str_repr
+
+    def __eq__(self, other):
+        return self.str_repr == other.str_repr
+
+    def __hash__(self):
+        return hash(self.str_repr)
 
 def flatten(items):
     """
@@ -145,6 +165,19 @@ class Events():
                 self.eventmatchers[k] = v
             else:
                 self.events[k] = v
+
+    def unbind(self, event_keys):
+        """
+        Unbinds existing events.
+        Useful for local adaptations to be able to remove existing events.
+
+        Param event_keys: A sequence of event keys to unbind.
+        """
+        for k in event_keys:
+            if hasattr(k, 'match'):
+                del self.eventmatchers[k]
+            else:
+                del self.events[k]
 
     def event(self, fn):
         """
@@ -259,6 +292,25 @@ class Keys(object):
             return lambda k: self.modes[mode]['keys'][key](k)
         for k, v in flatten((v, k) for k, v in import_.iteritems()):
             mode['import'][k % self.defs] = wrap_import(v, k)
+
+    def unbind(self, keys=[], mode='main'):
+        """
+        Unbinds existing keys definitions.
+        Useful for local adaptations to remove existing key definitions.
+
+        Param mode: The name of the mode for which to unbind the keys.
+        Param keys: A sequence of keys to unbind.
+        """
+        mode = self.modes[mode]
+        for key in keys:
+            del mode['keys'][key]
+            groups = mode['desc'].keys()
+            for group in groups:
+                if key in mode['desc'][group]:
+                    mode['desc'][group].remove(key)
+                    if len(mode['desc'][group]) == 0:
+                        del mode['desc'][group]
+                        mode['groups'].remove(group)
 
     def dispatch(self, key):
         """
