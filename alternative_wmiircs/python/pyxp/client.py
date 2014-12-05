@@ -238,8 +238,11 @@ class File(object):
 
         self.offset = 0
     def __del__(self):
-        if not self.closed:
-            self._cleanup()
+        try:
+            if not self.closed:
+                self._cleanup()
+        except:
+            pass
 
     def _dorpc(self, fcall, async=None, error=None):
         if hasattr(fcall, 'fid'):
