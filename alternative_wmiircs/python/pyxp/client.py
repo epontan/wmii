@@ -151,14 +151,13 @@ class Client(object):
             if len(path) == 0:
                 break
 
-        @apply
         class Res:
             def __enter__(res):
                 return fid
             def __exit__(res, exc_type, exc_value, traceback):
                 if exc_type:
                     self._clunk(fid)
-        return Res
+        return Res()
 
     _file = property(lambda self: File)
     def _open(self, path, mode, fcall, origpath=None):

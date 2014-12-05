@@ -122,7 +122,6 @@ events.bind({
     Match('ClientClick', _, 5): lambda e, c, n: Tag('sel').select('down'),
 })
 
-@apply
 class Actions(event.Actions):
     def rehash(self, args=''):
         program_menu.choices = program_list(os.environ['PATH'].split(':'))
@@ -136,13 +135,14 @@ class Actions(event.Actions):
         wmii['exec'] = args
     def exit(self, args=''):
         client.awrite('/event', 'Quit')
+actions = Actions()
 
 program_menu = Menu(histfile='%s/history.progs' % confpath[0], nhist=5000,
                     action=curry(call, 'wmiir', 'setsid',
                                  pygmi.shell, '-c', background=True))
 action_menu = Menu(histfile='%s/history.actions' % confpath[0], nhist=500,
-                   choices=lambda: Actions._choices,
-                   action=Actions._call)
+                   choices=lambda: actions._choices,
+                   action=actions._call)
 tag_menu = Menu(histfile='%s/history.tags' % confpath[0], nhist=100,
                 choices=lambda: sorted(tags.tags.keys()))
 
@@ -302,7 +302,7 @@ addresize('',         'Grow', 'grow')
 addresize('Control-', 'Shrink', 'grow', '-1')
 addresize('Shift-',   'Nudge', 'nudge')
 
-Thread(target=lambda: Actions.rehash()).start()
+Thread(target=lambda: actions.rehash()).start()
 
 if not os.environ.get('WMII_NOPLUGINS', ''):
     dirs = filter(curry(os.access, _, os.R_OK),

@@ -23,16 +23,15 @@ class utf8(object):
     def __str__(self):
         return unicode(self).encode('utf-8')
 
-@apply
-class Toggle(utf8):
+class Atom(utf8):
+    def __init__(self, name):
+        self.name = name
     def __unicode__(self):
-        return unicode(self.__class__.__name__)
-@apply
-class Always(Toggle.__class__):
-    pass
-@apply
-class Never(Toggle.__class__):
-    pass
+        return unicode(self.name)
+
+Toggle = Atom('Toggle')
+Always = Atom('Always')
+Never = Atom('Never')
 
 def constrain(min, max, val):
     return min if val < min else max if val > max else val
@@ -772,8 +771,7 @@ class Rule(collections.MutableMapping, utf8):
         return list(self._items)
 
 
-@apply
-class wmii(Ctl):
+class Wmii(Ctl):
     ctl_path = '/ctl'
     ctl_types = {
         'normcolors': (Colors.from_string, lambda c: str(Colors(*c))),
@@ -787,6 +785,7 @@ class wmii(Ctl):
     rbuttons = Button.map('right')
 
     rules    = Rules('/rules')
+wmii = Wmii()
 
 class Tags(object):
     PREV = []
