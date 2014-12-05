@@ -328,6 +328,9 @@ class Actions(object):
     A class to represent user-callable actions. All methods without
     leading underscores in their names are treated as callable actions.
     """
+    def __init__(self, show_scripts=True):
+        self.show_scripts = show_scripts
+
     def __getattr__(self, name):
         if not name:
             return _
@@ -354,7 +357,7 @@ class Actions(object):
     @prop(doc="Returns the names of the public methods callable as actions, with trailing underscores stripped.")
     def _choices(self):
         return sorted(
-            program_list(pygmi.confpath) +
+            (program_list(pygmi.confpath) if self.show_scripts else []) +
             [re.sub('_$', '', k) for k in dir(self)
              if not re.match('^_', k) and callable(getattr(self, k))])
 
