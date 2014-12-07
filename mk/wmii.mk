@@ -1,16 +1,7 @@
-
-VERS = hg$$(hg identify -n)
-VERS = $$(test -n "$$WMII_HGVERSION" && echo $$WMII_HGVERSION || \
-          echo -n "hg$$(hg id -n 2>/dev/null)")
-
-WMII_HGVERSION = $(VERS)
-WMII_HGVERSION:= $(shell echo $(VERS))
-WMII_HGVERSION!= echo $(VERS)
-
-VERSION = $(WMII_HGVERSION)
+VERSION = git-$$(git head)
 COPYRIGHT = ©2010 Kris Maglione
 
-CONFDIR = wmii-hg
+CONFDIR = wmii
 LOCALCONF = ~/.$(CONFDIR)
 GLOBALCONF = $(ETC)/$(CONFDIR)
 
