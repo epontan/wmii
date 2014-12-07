@@ -290,7 +290,11 @@ class Client(Dir):
             return int(name, 16)
         except:
             return unicode(name)
-    name_write = lambda self, name: name if isinstance(name, basestring) else '%#x' % name
+    @staticmethod
+    def name_write(name):
+        if isinstance(name, int):
+            return '%#x' % name
+        return name
 
     allow  = Dir.ctl_property('allow')
     fullscreen = Dir.toggle_property('fullscreen')
