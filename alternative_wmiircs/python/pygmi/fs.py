@@ -801,16 +801,18 @@ class Tags(object):
         self.focuscol = focuscol
         self.urgentcol = urgentcol
         self.lastselect = datetime.now()
+        self.reset()
+        self.mru = [self.sel.id]
+        self.idx = -1
+        Tags.instance = self
+
+    def reset(self):
         for t in wmii.tags:
             self.add(t)
         for b in wmii.lbuttons.itervalues():
             if b.name not in self.tags:
                 b.remove()
         self.focus(Tag('sel').id)
-
-        self.mru = [self.sel.id]
-        self.idx = -1
-        Tags.instance = self
 
     def add(self, tag):
         self.tags[tag] = Tag(tag)
