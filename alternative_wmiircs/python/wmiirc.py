@@ -1,19 +1,12 @@
-import datetime
-import operator
 import os
-import re
 import sys
 import traceback
-from threading import Thread, Timer
+from threading import Thread
 
 import pygmi
 from pygmi import *
 from pygmi import event
 
-identity = lambda k: k
-
-# Begin Configuration
-#
 # Note: This file loads ~/.wmii/wmiirc_local.py if it exists.
 # Configuration should be placed in that file, and this file
 # left unmodified, if possible. wmiirc_local should import
@@ -22,42 +15,48 @@ identity = lambda k: k
 # Do *not* copy this file to wmiirc_local.py lest you want it
 # executed twice.
 
-# Keys
+# Tell that we are starting up (older wmiirc session will terminate)
+client.awrite('/event', 'Start wmiirc')
+
+# Cleanup from previous session
+for name in wmii.rbuttons:
+    Button('right', name).remove()
+
+
+# Keys definitions
 keys.defs = dict(
-    mod='Mod4',
+    mod='Mod1',
     left='h',
     down='j',
     up='k',
     right='l')
 
-# Bars
-noticetimeout=5
-noticebar=('right', '!notice')
 
 # Theme
 background = '#333333'
 floatbackground='#222222'
 
-wmii['font'] = 'drift,-*-fixed-*-*-*-*-9-*-*-*-*-*-*-*'
-wmii['normcolors'] = '#000000', '#c1c48b', '#81654f'
-wmii['focuscolors'] = '#000000', '#81654f', '#000000'
-wmii['grabmod'] = keys.defs['mod']
-wmii['border'] = 2
+wmii['font'] = '-*-fixed-*-*-*-*-12-*-*-*-*-*-*-*'
+wmii['normcolors'] = '#bbbbbb', '#222222', '#474747'
+wmii['focuscolors'] = '#eeeeee', '#506070', '#708090'
+wmii.cache['urgentcolors'] = '#eeeeee', '#bb6050', '#dd8070'
+wmii['border'] = 1
 
-def setbackground(color):
-    call('xsetroot', '-solid', color, background=True)
-setbackground(background)
+
+# Behavior / rules
+wmii['grabmod'] = keys.defs['mod']
+wmii['colmode'] = 'default'
+
+if Tag('sel').id == '1':
+    # If fresh session, change the current colmode to default as well
+    Tag('sel')['colmode'] = 'sel default'
 
 terminal = 'wmiir', 'setsid', '@TERMINAL@'
 pygmi.shell = os.environ.get('SHELL', 'sh')
-tray = 'witray',
 
-@defmonitor
-def load(self):
-    return wmii.cache['normcolors'], re.sub(r'^.*: ', '', call('uptime')).replace(', ', ' ')
-@defmonitor
-def time(self):
-    return wmii.cache['focuscolors'], datetime.datetime.now().strftime('%c')
+wmii.colrules = (
+    ('.*', '62+38 # Golden Ratio'),
+)
 
 wmii.rules = (
     # Apps with system tray icons like to their main windows
@@ -72,6 +71,15 @@ wmii.rules = (
     (ur'^ROX-Filer:',   dict(group=0)),
 )
 
+
+# Misc functions
+def setbackground(color='black'):
+    bg_file = '%s/.wmii/background' % os.getenv('HOME')
+    if os.path.isfile(bg_file):
+        call('feh', '--bg-fill', bg_file)
+    else:
+        call('xsetroot', '-solid', color)
+
 def unresponsive_client(client):
     msg = 'The following client is not responding. What would you like to do?'
     resp = call('wihack', '-transient', str(client.id),
@@ -80,11 +88,27 @@ def unresponsive_client(client):
     if resp == 'Kill':
         client.slay()
 
-# End Configuration
+def clickmenu(choices, args):
+    ClickMenu(choices=(k for k, v in choices),
+            action=lambda choice: dict(choices).get(choice, lambda k: k)(*args)
+             ).call()
 
-client.awrite('/event', 'Start wmiirc')
+def temp_tag():
+    tag = Tag('sel').id
+    client = Client.name_write(Client('sel').id)
+    if tag == client:
+        Client(client).tags = '-%s' % client
+        tags.select(tags.LAST)
+    else:
+        Client(client).tags = '+%s' % client
+        tags.select(client)
 
+
+# Initialize tags
 tags = Tags()
+
+
+# Events
 events.bind({
     ('Quit', Match('Start', 'wmiirc')): lambda *a: sys.exit(),
     'CreateTag':    tags.add,
@@ -100,8 +124,6 @@ events.bind({
 
     'Unresponsive': lambda args: Thread(target=unresponsive_client,
                                         args=(Client(args),)).start(),
-
-    'Notice':       lambda args: notice.show(args),
 
     'ScreenChange': lambda args: wmii.ctl('wipescreens'),
 
@@ -122,12 +144,18 @@ events.bind({
     Match('ClientClick', _, 5): lambda e, c, n: Tag('sel').select('down'),
 })
 
+
+# Actions
 class Actions(event.Actions):
+    def reload(self, args=''):
+        call(sys.argv[0], background=True)
     def rehash(self, args=''):
         program_menu.choices = program_list(os.environ['PATH'].split(':'))
     def showkeys(self, args=''):
         message(keys.help)
     def quit(self, args=''):
+        events.alive = False
+        self.exit()
         wmii.ctl('quit')
     def eval_(self, args=''):
         exec args
@@ -135,8 +163,12 @@ class Actions(event.Actions):
         wmii['exec'] = args
     def exit(self, args=''):
         client.awrite('/event', 'Quit')
+    def sticky(self, args=''):
+        Client('sel').tags = '/./'
 actions = Actions()
 
+
+# Menus
 program_menu = Menu(histfile='%s/history.progs' % confpath[0], nhist=5000,
                     action=curry(call, 'wmiir', 'setsid',
                                  pygmi.shell, '-c', background=True))
@@ -146,31 +178,8 @@ action_menu = Menu(histfile='%s/history.actions' % confpath[0], nhist=500,
 tag_menu = Menu(histfile='%s/history.tags' % confpath[0], nhist=100,
                 choices=lambda: sorted(tags.tags.keys()))
 
-def clickmenu(choices, args):
-    ClickMenu(choices=(k for k, v in choices),
-              action=lambda choice: dict(choices).get(choice, identity)(*args)
-             ).call()
 
-class Notice(Button):
-    def __init__(self):
-        super(Notice, self).__init__(*noticebar, colors=wmii.cache['normcolors'])
-        self.timer = None
-        self.show(' ')
-
-    def tick(self):
-        self.create(wmii.cache['normcolors'], ' ')
-
-    def write(self, notice):
-        client.awrite('/event', 'Notice %s' % notice.replace('\n', ' '))
-
-    def show(self, notice):
-        if self.timer:
-            self.timer.cancel()
-        self.create(wmii.cache['normcolors'], notice)
-        self.timer = Timer(noticetimeout, self.tick)
-        self.timer.start()
-notice = Notice()
-
+# Key bindings
 keys.bind('main', (
     "Moving around",
     ('%(mod)s-%(left)s',  "Select the client to the left",
@@ -190,7 +199,6 @@ keys.bind('main', (
         lambda k: Tag('sel').select('up', stack=True)),
     ('%(mod)s-Control-%(down)s', "Select the stack below",
         lambda k: Tag('sel').select('down', stack=True)),
-
 
     "Moving clients around",
     ('%(mod)s-Shift-%(left)s',  "Move selected client to the left",
@@ -233,15 +241,19 @@ keys.bind('main', (
         lambda k: tags.select(tag_menu())),
     ('%(mod)s-Shift-t', "Retag the selected client",
         lambda k: setattr(Client('sel'), 'tags', tag_menu())),
+    ('%(mod)s-y', "Create a temporary tag for selected client",
+        lambda k: temp_tag()),
+    ('%(mod)s-u', "Select urgent tag",
+        lambda k: tags.select_urgent()),
 
-    ('%(mod)s-n', "Move to the view to the left",
-        lambda k: tags.select(tags.next())),
-    ('%(mod)s-b', "Move to the view to the right",
+    ('%(mod)s-b', "Move to the view to the left",
         lambda k: tags.select(tags.next(True))),
-    ('%(mod)s-Shift-n', "Move to the view to the left, take along current client",
-        lambda k: tags.select(tags.next(), take_client=Client('sel'))),
-    ('%(mod)s-Shift-b', "Move to the view to the right, take along current client",
+    ('%(mod)s-n', "Move to the view to the right",
+        lambda k: tags.select(tags.next())),
+    ('%(mod)s-Shift-b', "Move to the view to the left, take along current client",
         lambda k: tags.select(tags.next(True), take_client=Client('sel'))),
+    ('%(mod)s-Shift-n', "Move to the view to the right, take along current client",
+        lambda k: tags.select(tags.next(), take_client=Client('sel'))),
 
     ('%(mod)s-i', "Move to the newer tag in the tag stack",
         lambda k: tags.select(tags.NEXT)),
@@ -302,19 +314,29 @@ addresize('',         'Grow', 'grow')
 addresize('Control-', 'Shrink', 'grow', '-1')
 addresize('Shift-',   'Nudge', 'nudge')
 
-Thread(target=lambda: actions.rehash()).start()
 
-if not os.environ.get('WMII_NOPLUGINS', ''):
-    dirs = filter(curry(os.access, _, os.R_OK),
-                  ('%s/plugins' % dir for dir in confpath))
-    files = filter(re.compile(r'\.py$').search,
-                   reduce(operator.add, map(os.listdir, dirs), []))
-    for f in ['wmiirc_local'] + ['plugins.%s' % file[:-3] for file in files]:
-        try:
-            __import__(f)
-        except Exception, e:
-            traceback.print_exc(sys.stdout)
+# Rehash path to programs
+actions.rehash()
 
-call(*tray, background=True)
+
+# Load local adaptations if any
+wmiirc_local_exist = any(
+    (os.path.isfile(os.path.join(f, 'wmiirc_local.py')) for f in confpath))
+
+if wmiirc_local_exist:
+    try:
+        import wmiirc_local
+    except Exception, e:
+        traceback.print_exc(sys.stdout)
+
+
+# Set background
+setbackground(background)
+
+
+# Run custom hook script if any
+custom_hook = find_script('hook')
+if custom_hook:
+    call(custom_hook, background=True)
 
 # vim:se sts=4 sw=4 et:
