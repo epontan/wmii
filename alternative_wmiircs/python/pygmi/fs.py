@@ -723,7 +723,12 @@ class Rule(collections.MutableMapping, utf8):
     def __init__(self, parent, key, items={}):
         self.key = key
         self._items = []
-        self.setitems(items.iteritems() if isinstance(items, dict) else items)
+        if isinstance(items, dict):
+            self.dicttype = True
+            self.setitems(items.iteritems())
+        else:
+            self.dicttype = False
+            self.setitems(items)
         self.parent = parent
 
     def __getitem__(self, key):
@@ -755,19 +760,27 @@ class Rule(collections.MutableMapping, utf8):
         return tuple(self.iteritems()) + tuple(items)
 
     def setitems(self, items):
-        items = list(items)
-        assert not any('=' in key or
-                       spacere.search(self.quotekey(key)) or
-                       spacere.search(self.quotevalue(val)) for (key, val) in items)
+        if self.dicttype:
+            items = list(items)
+            assert not any('=' in key or
+                    spacere.search(self.quotekey(key)) or
+                    spacere.search(self.quotevalue(val)) for (key, val) in items)
+        else:
+            items = (items,)
         self._items = items
         if self.parent:
             self.parent.rewrite()
 
     def __unicode__(self):
-        return u'/%s/ %s\n' % (
-            Rules.quoteslash(self.key),
-            u' '.join(u'%s=%s' % (self.quotekey(k), self.quotevalue(v))
-                      for (k, v) in self.iteritems()))
+        if self.dicttype:
+            return u'/%s/ %s\n' % (
+                    Rules.quoteslash(self.key),
+                    u' '.join(u'%s=%s' % (self.quotekey(k), self.quotevalue(v))
+                        for (k, v) in self.iteritems()))
+        else:
+            return u'/%s/ -> %s\n' % (
+                    Rules.quoteslash(self.key),
+                    u' '.join(self.iteritems()))
 
     def iteritems(self):
         return iter(self._items)
@@ -789,6 +802,7 @@ class Wmii(Ctl):
     rbuttons = Button.map('right')
 
     rules    = Rules('/rules')
+    colrules = Rules('/colrules')
 wmii = Wmii()
 
 class Tags(object):

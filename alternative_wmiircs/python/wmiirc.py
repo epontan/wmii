@@ -55,7 +55,7 @@ terminal = 'wmiir', 'setsid', '@TERMINAL@'
 pygmi.shell = os.environ.get('SHELL', 'sh')
 
 wmii.colrules = (
-    ('.*', '62+38 # Golden Ratio'),
+    (ur'.*', '62+38'), # Golden Ratio
 )
 
 wmii.rules = (
