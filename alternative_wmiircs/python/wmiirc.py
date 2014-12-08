@@ -174,7 +174,7 @@ program_menu = Menu(histfile='%s/history.progs' % confpath[0], nhist=5000,
                                  pygmi.shell, '-c', background=True))
 action_menu = Menu(histfile='%s/history.actions' % confpath[0], nhist=500,
                    choices=lambda: actions._choices,
-                   action=actions._call)
+                   action=lambda args: actions._call(args))
 tag_menu = Menu(histfile='%s/history.tags' % confpath[0], nhist=100,
                 choices=lambda: sorted(tags.tags.keys()))
 
