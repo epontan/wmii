@@ -1,4 +1,4 @@
-VERSION = git-$$(git head)
+VERSION = git-$$(git rev-list -n1 --abbrev-commit HEAD)
 COPYRIGHT = ©2010 Kris Maglione
 
 CONFDIR = wmii
