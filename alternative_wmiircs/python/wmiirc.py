@@ -333,10 +333,4 @@ if wmiirc_local_exist:
 # Set background
 setbackground(background)
 
-
-# Run custom hook script if any
-custom_hook = find_script('hook')
-if custom_hook:
-    call(custom_hook, background=True)
-
 # vim:se sts=4 sw=4 et:
