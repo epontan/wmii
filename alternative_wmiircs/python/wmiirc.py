@@ -25,7 +25,7 @@ for name in wmii.rbuttons:
 
 # Keys definitions
 keys.defs = dict(
-    mod='Mod1',
+    mod='Mod4',
     left='h',
     down='j',
     up='k',
