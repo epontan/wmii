@@ -74,11 +74,7 @@ wmii.rules = (
 
 # Misc functions
 def setbackground(color='black'):
-    bg_file = '%s/.wmii/background' % os.getenv('HOME')
-    if os.path.isfile(bg_file):
-        call('feh', '--bg-fill', bg_file)
-    else:
-        call('xsetroot', '-solid', color)
+    call('xsetroot', '-solid', color)
 
 def unresponsive_client(client):
     msg = 'The following client is not responding. What would you like to do?'
