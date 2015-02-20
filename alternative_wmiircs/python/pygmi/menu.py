@@ -14,11 +14,14 @@ def inthread(name, args, action, **kwargs):
 
 class Menu(object):
     def __init__(self, choices=(), action=None,
-                 histfile=None, nhist=None):
+                 histfile=None, nhist=None,
+                 prompt=None, rows=None):
         self.choices = choices
         self.action = action
         self.histfile = histfile
         self.nhist = nhist
+        self.prompt = prompt
+        self.rows = rows
 
     def __call__(self, choices=None):
         if choices is None:
@@ -30,6 +33,10 @@ class Menu(object):
             args += ['-h', self.histfile]
         if self.nhist:
             args += ['-n', self.nhist]
+        if self.prompt:
+            args += ['-p', self.prompt]
+        if self.rows:
+            args += ['-r', self.rows]
         return inthread('Menu', map(str, args), self.action, input='\n'.join(choices))
     call = __call__
 
