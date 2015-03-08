@@ -40,7 +40,7 @@ class Mux(object):
         self.muxer = None
 
         self.async_mux = Queue(self.mux)
-        self.async_dispatch = Queue(self.async_dispatch)
+        self.async_dispatch = Queue(self._async_dispatch)
 
         if isinstance(con, basestring):
             con = dial(con)
@@ -86,7 +86,7 @@ class Mux(object):
         else:
             return self.mux(rpc)
 
-    def async_dispatch(self, rpc):
+    def _async_dispatch(self, rpc):
         rpc.async(self, rpc.data)
 
     def electmuxer(self):
@@ -189,7 +189,7 @@ class Rpc(Condition):
         self.data = data
         self.notify()
         if callable(self.async):
-            self.mux.async_dispatch(self)
+            self.mux.async_dispatch.push(self)
 
 class Queue(Thread):
     _id = 1
