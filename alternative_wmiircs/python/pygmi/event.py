@@ -3,6 +3,9 @@ import re
 import sys
 import traceback
 
+from socket import error as SocketError
+from errno import EPIPE as BROKEN_PIPE
+
 import pygmi
 from pygmi.util import prop
 from pygmi import monitor, client, curry, call, program_list, _
@@ -137,10 +140,14 @@ class Events():
         Continues so long as #alive is True.
         """
         keys.mode = 'main'
-        for line in client.readlines('/event'):
-            if not self.alive:
-                break
-            self.dispatch(*line.split(' ', 1))
+        try:
+            for line in client.readlines('/event'):
+                if not self.alive:
+                    break
+                self.dispatch(*line.split(' ', 1))
+        except SocketError, e:
+            if e.errno != BROKEN_PIPE:
+                raise
         self.alive = False
 
     def bind(self, items={}, **kwargs):

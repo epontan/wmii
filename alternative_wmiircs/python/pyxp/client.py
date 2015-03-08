@@ -7,6 +7,9 @@ import sys
 from threading import *
 import traceback
 
+from socket import error as SocketError
+from errno import EPIPE as BROKEN_PIPE
+
 import pyxp
 from pyxp import fcall, fields
 from pyxp.mux import Mux
@@ -45,10 +48,14 @@ class Client(object):
 
     @staticmethod
     def respond(callback, data, exc=None, tb=None):
-        if hasattr(callback, 'func_code'):
-            callback(*(data, exc, tb)[0:callback.func_code.co_argcount])
-        elif callable(callback):
-            callback(data)
+        try:
+            if hasattr(callback, 'func_code'):
+                callback(*(data, exc, tb)[0:callback.func_code.co_argcount])
+            elif callable(callback):
+                callback(data)
+        except SocketError, e:
+            if e.errno != BROKEN_PIPE:
+                raise
 
     def __enter__(self):
         return self
@@ -224,6 +231,9 @@ class File(object):
         return self
     def __exit__(self, *args):
         self.close()
+    def __del__(self):
+        if not self.closed:
+            self.close()
 
     def __init__(self, client, path, fcall, fid, mode, cleanup):
         self.lock = RLock()
@@ -237,12 +247,6 @@ class File(object):
         self.closed = False
 
         self.offset = 0
-    def __del__(self):
-        try:
-            if not self.closed:
-                self._cleanup()
-        except:
-            pass
 
     def _dorpc(self, fcall, async=None, error=None):
         if hasattr(fcall, 'fid'):
@@ -330,8 +334,11 @@ class File(object):
         self.closed = True
         try:
             self._cleanup()
-        except:
+        except (TypeError, AttributeError):
             pass
+        except SocketError, e:
+            if e.errno != BROKEN_PIPE:
+                raise
         self.tg = None
         self.fid = None
         self.client = None

@@ -1,5 +1,8 @@
 from threading import Lock, Timer
 
+from socket import error as SocketError
+from errno import EPIPE as BROKEN_PIPE
+
 from pygmi import client
 from pygmi.fs import *
 
@@ -89,10 +92,14 @@ class Monitor(object):
                 label = None, label
             with self.lock:
                 if self.active:
-                    if label is None:
-                        self.button.remove()
-                    else:
-                        self.button.create(*label)
+                    try:
+                        if label is None:
+                            self.button.remove()
+                        else:
+                            self.button.create(*label)
+                    except SocketError, e:
+                        if e.errno != BROKEN_PIPE:
+                            raise
 
                     self.timer = Timer(self.interval, self.tick)
                     self.timer.name = 'Monitor-Timer-%s' % self.name
