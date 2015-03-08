@@ -103,16 +103,19 @@ class Client(client.Client):
     def aread(self, callback, fail=None, count=None, offset=None, buf=''):
         file = yield callback, fail, OREAD
         file.aread(callback, fail, count, offset, buf)
+        file.close()
 
     @awithfile
     def awrite(self, data, callback=True, fail=None, offset=None):
         file = yield callback, fail, OWRITE
         file.awrite(data, callback, fail, offset)
+        file.close()
 
     @awithfile
     def areadlines(self, callback):
         file = yield callback, fail, OREAD
         file.areadlines(callback)
+        file.close()
 
 class File(client.File):
 
