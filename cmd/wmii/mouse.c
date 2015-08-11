@@ -28,49 +28,20 @@ quad_cursor(Align align) {
 	}
 }
 
-static bool
-cwin_expose(Window *w, void *aux, XExposeEvent *e) {
-
-	fill(w, rectsubpt(w->r, w->r.min), &def.focuscolor.bg);
-	fill(w, w->r, &def.focuscolor.bg);
-	return false;
-}
-
-static Handlers chandler = {
-	.expose = cwin_expose,
-};
-
-Window*
+static Window*
 constraintwin(Rectangle r) {
 	Window *w;
 
+	if(Dx(r) <= 0)
+		r.max.x += 1; /* Avoid crash if unresizable */
+
 	w = createwindow(&scr.root, r, 0, InputOnly, nil, 0);
-	if(0) {
-		Window *w2;
-
-		w2 = createwindow(&scr.root, r, 0, InputOutput, nil, 0);
-		selectinput(w2, ExposureMask);
-		w->aux = w2;
-
-		setborder(w2, 1, &def.focuscolor.border);
-		sethandler(w2, &chandler);
-		mapwin(w2);
-		raisewin(w2);
-	}
 	mapwin(w);
 	return w;
 }
 
-void
-destroyconstraintwin(Window *w) {
-
-	if(w->aux)
-		destroywindow(w->aux);
-	destroywindow(w);
-}
-
 static Window*
-gethsep(Rectangle r) {
+separatorwin(Rectangle r) {
 	Window *w;
 	WinAttr wa;
 
@@ -223,13 +194,14 @@ readmotion(Point *p) {
 
 static void
 mouse_resizecolframe(Frame *f, Align align) {
-	Window *cwin, *hwin = nil;
+	Window *cwin, *hwin = nil, *vwin = nil;
 	Divide *d;
 	View *v;
 	Area *a;
-	Rectangle r;
+	Rectangle r, vr;
 	Point pt, min;
-	int s;
+	int s, scrn;
+	bool vertical = false;
 
 	assert((align&(East|West)) != (East|West));
 	assert((align&(North|South)) != (North|South));
@@ -247,6 +219,8 @@ mouse_resizecolframe(Frame *f, Align align) {
 
 	if(align & East)
 		d = d->next;
+
+	scrn = (d->left ? d->left : d->right)->screen;
 
 	min.x = column_minwidth();
 	min.y = /*frame_delta_h() +*/ labelh(def.font);
@@ -284,7 +258,7 @@ mouse_resizecolframe(Frame *f, Align align) {
 	r.max.y = r.min.y + 2;
 
 	if(align & (North|South))
-		hwin = gethsep(r);
+		hwin = separatorwin(r);
 
 	if(!grabpointer(&scr.root, cwin, cursor[CurSizing], MouseMask))
 		goto done;
@@ -293,10 +267,18 @@ mouse_resizecolframe(Frame *f, Align align) {
 	pt.y = (align & North ? f->r.min.y : f->r.max.y);
 	warppointer(pt);
 
+	if(align & (East|West)
+	&& pt.x != selview->r[scrn].min.x
+	&& pt.x != selview->r[scrn].max.x) {
+		vertical = true;
+		vr = Rect(pt.x, v->r[scrn].min.y, pt.x + 1, v->r[scrn].max.y);
+		vwin = separatorwin(vr);
+	}
+
 	while(readmotion(&pt)) {
-		if(align & West)
+		if(align & West && vertical)
 			r.min.x = pt.x;
-		else if(align & East)
+		else if(align & East && vertical)
 			r.max.x = pt.x;
 
 		if(align & South)
@@ -305,16 +287,21 @@ mouse_resizecolframe(Frame *f, Align align) {
 			r.min.y = pt.y - 1;
 		r.max.y = r.min.y+2;
 
-		if(align & (East|West))
+		if(align & (East|West) && vertical)
 			div_set(d, pt.x);
 		if(hwin)
 			reshapewin(hwin, r);
+		if(vwin) {
+			vr.min.x = pt.x;
+			vr.max.x = pt.x + 1;
+			reshapewin(vwin, vr);
+		}
 	}
 
 	r = f->r;
-	if(align & West)
+	if(align & West && vertical)
 		r.min.x = pt.x;
-	else if(align & East)
+	else if(align & East && vertical)
 		r.max.x = pt.x;
 	if(align & North)
 		r.min.y = pt.y;
@@ -323,9 +310,9 @@ mouse_resizecolframe(Frame *f, Align align) {
 	column_resizeframe(f, r);
 
 	/* XXX: Magic number... */
-	if(align & West)
+	if(align & West && vertical)
 		pt.x = f->r.min.x + 4;
-	else if(align & East)
+	else if(align & East && vertical)
 		pt.x = f->r.max.x - 4;
 
 	if(align & North)
@@ -336,16 +323,18 @@ mouse_resizecolframe(Frame *f, Align align) {
 
 done:
 	ungrabpointer();
-	destroyconstraintwin(cwin);
-	if (hwin)
+	destroywindow(cwin);
+	if(hwin)
 		destroywindow(hwin);
+	if(vwin)
+		destroywindow(vwin);
 }
 
 void
 mouse_resizecol(Divide *d) {
-	Window *cwin;
+	Window *cwin, *vwin = nil;
 	View *v;
-	Rectangle r;
+	Rectangle r, vr;
 	Point pt;
 	int minw, scrn;
 
@@ -366,8 +355,15 @@ mouse_resizecol(Divide *d) {
 	if(!grabpointer(&scr.root, cwin, cursor[CurNone], MouseMask))
 		goto done;
 
-	while(readmotion(&pt))
+	vr = Rect(pt.x, v->r[scrn].min.y, pt.x + 1, v->r[scrn].max.y);
+	vwin = separatorwin(vr);
+
+	while(readmotion(&pt)) {
 		div_set(d, pt.x);
+		vr.min.x = pt.x;
+		vr.max.x = pt.x + 1;
+		reshapewin(vwin, vr);
+	}
 
 	if(d->left)
 		d->left->r.max.x = pt.x;
@@ -383,7 +379,8 @@ mouse_resizecol(Divide *d) {
 
 done:
 	ungrabpointer();
-	destroyconstraintwin(cwin);
+	destroywindow(cwin);
+	destroywindow(vwin);
 }
 
 void
@@ -606,7 +603,7 @@ mouse_tempvertresize(Area *a, Point p) {
 
 done:
 	ungrabpointer();
-	destroyconstraintwin(cwin);
+	destroywindow(cwin);
 	def.incmode = incmode;
 	resizing = false;
 	column_arrange(a, false);

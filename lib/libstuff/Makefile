@@ -175,7 +175,9 @@ OBJ=\
 	x11/windows/getwinrect	\
 	x11/windows/lowerwin	\
 	x11/windows/mapwin	\
+	x11/windows/mapraisewin	\
 	x11/windows/movewin	\
+	x11/windows/moveresizewin	\
 	x11/windows/raisewin	\
 	x11/windows/reparentwindow	\
 	x11/windows/reshapewin	\

@@ -229,8 +229,6 @@ Area*	strarea(View*, ulong, const char*);
 void	warning(const char*, ...);
 
 /* mouse.c */
-Window*	constraintwin(Rectangle);
-void	destroyconstraintwin(Window*);
 void	grab_button(XWindow, uint button, ulong mod);
 void	mouse_checkresize(Frame*, Point, bool);
 void	mouse_movegrabbox(Client*, bool);

@@ -575,6 +575,11 @@ column_resizeframe(Frame *f, Rectangle r) {
 	a = f->area;
 	v = a->view;
 
+	if(f->r.min.x == v->r[a->screen].min.x)
+		r.min.x = f->r.min.x;
+	if(f->r.max.x == v->r[a->screen].max.x)
+		r.max.x = f->r.max.x;
+
 	minw = column_minwidth();
 
 	al = a->prev;
