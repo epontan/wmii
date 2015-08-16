@@ -12,7 +12,8 @@ DIRS =	menu \
 TARG =	wihack    \
 	wmii.rc   \
 	wmii.sh   \
-	wmiir
+	wmiir     \
+	wmii-wrapper
 
 LIBS += $(LIBS9) $(LIBIXP)
 

@@ -1,3 +1,25 @@
+wmii
+====
+
+*Note (pu branch)*
+----------------
+wmii is basically unmaintained in the upstream repository.  There
+hasn't been any activity for over a year.  Many wmii users are
+switching to alternatives like [i3](http://i3wm.org/),
+[bspwm](http://github.com/baskerville/bspwm), etc., but I have used
+wmii far too long (since 2006) to just give up on it.
+
+I have created a pu (proposed updates) branch where I fix bugs and
+make improvements (largely to my own liking) that I think will make
+wmii better but without changing its behavior too much.
+
+I personally use the python alternative wmiirc implementation inside
+the wmii repository and there are quite a lot of modifications done
+in that area.
+
+/ Pontus Andersson \<epontan at gmail dot com\>
+
+
 Abstract
 --------
 wmii is a dynamic window manager for X11.  It supports classic and
@@ -20,10 +42,12 @@ Installation
 First, edit config.mk to match your local setup.
 
 To build, simply run:
-	make
+
+    make
 
 To install, run the following, as root if necessary:
-	make install
+
+    make install
 
 On debian, you should only have to run `make deb` to create a debian
 package.  No further configuration should be necessary.
@@ -33,22 +57,26 @@ Running wmii
 ------------
 Add the following line to your .xinitrc to start wmii using startx:
 
-    until wmii; do :; done
+    wmii-wrapper
+
+Or the following to run with the alternative python wmiirc:
+
+    wmii-wrapper -r python/wmiirc
 
 In order to connect wmii to a specific display, make sure that the
 DISPLAY environment variable is set correctly.  For example:
 
-    DISPLAY=:1 wmii
+    DISPLAY=:1 wmii-wrapper
 
 This will start wmii on display :1.
 
 
 Configuration
 -------------
-The configuration of wmii is done by customizing the rc script wmiirc,
+The configuration of wmii is done by customizing the rc script `wmiirc`,
 which remotely controls the window manager and handles various events.
-The main wmiirc script lives in @GLOBALCONF@ while wmiirc_local goes
-in @LOCALCONF@.
+The main `wmiirc` script lives in `/etc/wmii` while `wmiirc_local` goes
+in `~/.wmii`.
 
 More advanced versions of wmiirc are provided in python and ruby.
 For more information on them, see alternative_wmiircs/README.
@@ -58,35 +86,36 @@ Credits
 The following people have contributed especially to wmii in various
 ways:
 
-- Christoph Wegscheider <christoph dot wegscheider at wegi dot net>
-- Georg Neis <gn at suckless dot org>
-- Uwe Zeisberger <zeisberg at informatik dot uni-freiburg dot de>
-- Uriel <uriel99 at gmail dot com>
-- Scot Doyle <scot at scotdoyle dot com>
-- Sebastian Hartmann <seb dot wmi at gmx dot de>
-- Bernhard Leiner <bleiner at gmail dot com>
-- Jonas Domeij <jonas dot domeij at gmail dot com>
-- Vincent <10 dot 50 at free dot fr>
-- Oliver Kopp <olly at flupp dot de>
-- Sebastian Roth <sebastian dot roth at gmail dot com>
-- Nico Golde <nico at ngolde dot de>
-- Steve Hoffman <steveh at g2switchworks dot com>
-- Christof Musik <christof at senfdax dot de>
-- Steffen Liebergeld <perl at gmx dot org>
-- Tobias Walkowiak <wal at ivu dot de>
-- Sander van Dijk <a dot h dot vandijk at gmail dot com>
-- Salvador Peiro <saoret dot one at gmail dot com>
-- Anthony Martin <ality at pbrane dot org>
-- Icarus Sparry <wmii at icarus dot freeuk dot com>
-- Norman Golisz <norman dot golisz at arcor dot de>
-- Stefano K. Lee <wizinblack at gmail dot com >
-- Stefan Tibus <sjti at gmx dot net>
-- Neptun <neptun at gmail dot com>
-- Daniel Wäber <_wabu at web dot de>
+- Christoph Wegscheider \<christoph dot wegscheider at wegi dot net\>
+- Georg Neis \<gn at suckless dot org\>
+- Uwe Zeisberger \<zeisberg at informatik dot uni-freiburg dot de\>
+- Uriel \<uriel99 at gmail dot com\>
+- Scot Doyle \<scot at scotdoyle dot com\>
+- Sebastian Hartmann \<seb dot wmi at gmx dot de\>
+- Bernhard Leiner \<bleiner at gmail dot com\>
+- Jonas Domeij \<jonas dot domeij at gmail dot com\>
+- Vincent \<10 dot 50 at free dot fr\>
+- Oliver Kopp \<olly at flupp dot de\>
+- Sebastian Roth \<sebastian dot roth at gmail dot com\>
+- Nico Golde \<nico at ngolde dot de\>
+- Steve Hoffman \<steveh at g2switchworks dot com\>
+- Christof Musik \<christof at senfdax dot de\>
+- Steffen Liebergeld \<perl at gmx dot org\>
+- Tobias Walkowiak \<wal at ivu dot de\>
+- Sander van Dijk \<a dot h dot vandijk at gmail dot com\>
+- Salvador Peiro \<saoret dot one at gmail dot com\>
+- Anthony Martin \<ality at pbrane dot org\>
+- Icarus Sparry \<wmii at icarus dot freeuk dot com\>
+- Norman Golisz \<norman dot golisz at arcor dot de\>
+- Stefano K. Lee \<wizinblack at gmail dot com \>
+- Stefan Tibus \<sjti at gmx dot net\>
+- Neptun \<neptun at gmail dot com\>
+- Daniel Wäber \<_wabu at web dot de\>
 
 
 References
 ----------
 [1] http://9p.cat-v.org
+
 [2] http://plan9.us
 

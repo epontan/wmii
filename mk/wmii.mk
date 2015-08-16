@@ -1,5 +1,5 @@
-VERSION = git-$$(git rev-list -n1 --abbrev-commit HEAD)
-COPYRIGHT = ©2010 Kris Maglione
+VERSION = $$(git describe --tags --dirty)
+COPYRIGHT = ©2015 Kris Maglione
 
 CONFDIR = wmii
 LOCALCONF = ~/.$(CONFDIR)
