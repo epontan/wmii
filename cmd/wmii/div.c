@@ -62,8 +62,12 @@ div_update_all(void) {
 	dp = &divs;
 	ap = nil;
 
-	for(d = *dp; d; d = d->next)
+	for(d = *dp; d; d = d->next) {
+		/* Force unmap */
+		d->w->unmapped = 0;
+		d->w->mapped = true;
 		unmapwin(d->w);
+    }
 
 	foreach_column(v, s, a) {
 		if(ap && ap->screen != s)
