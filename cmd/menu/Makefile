@@ -9,6 +9,9 @@ bindings.c: keys.txt Makefile
 	  sed 's/.*/	"&\\n"/' keys.txt; \
 	  echo "	;" ) >$@
 
+clean:
+	rm -f bindings.c
+
 TARG =	wimenu
 HFILES=	dat.h fns.h
 TAGFILES= dat.h $(ROOT)/include/*.h $(ROOT)/include/stuff/*.h

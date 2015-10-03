@@ -239,15 +239,14 @@ kdown_event(Window *w, void *aux, XKeyEvent *e) {
 		return false;
 
 	if(status == XLookupKeySym || status == XLookupBoth) {
-		key = XKeysymToString(ksym);
 		if(IsKeypadKey(ksym))
 			if(ksym == XK_KP_Enter)
 				ksym = XK_Return;
 			else if(ksym >= XK_KP_0 && ksym <= XK_KP_9)
 				ksym = (ksym - XK_KP_0) + XK_0;
+		key = XKeysymToString(ksym);
 
 		if(IsFunctionKey(ksym)
-		|| IsMiscFunctionKey(ksym)
 		|| IsKeypadKey(ksym)
 		|| IsPrivateKeypadKey(ksym)
 		|| IsPFKey(ksym))

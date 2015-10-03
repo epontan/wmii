@@ -5,8 +5,9 @@ Control-Shift-j     Accept literal
 Control-Shift-m     Accept literal
 Shift-Return        Accept literal
 
-Escape		    Reject
+Escape              Reject
 Control-Bracketleft Reject
+Control-c           Reject
 
 Left                Backward char
 Control-b           Backward char
@@ -35,7 +36,9 @@ Tab                 Complete next
 Control-i           Complete next
 Mod1-l              Complete next
 
-Mod1-p	            Paste PRIMARY
+Mod1-p              Paste PRIMARY
+Shift-Insert        Paste PRIMARY
+Control-v           Paste PRIMARY
 
 Shift-Tab           Complete prev
 Control-Shift-i     Complete prev
