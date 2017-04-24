@@ -56,7 +56,9 @@ div_update_all(void) {
 	Divide **dp, *d;
 	Area *a, *ap;
 	View *v;
+	Frame *f;
 	int s;
+	ulong fullscreens;
 
 	v = selview;
 	dp = &divs;
@@ -67,11 +69,19 @@ div_update_all(void) {
 		d->w->unmapped = 0;
 		d->w->mapped = true;
 		unmapwin(d->w);
-    }
+	}
+
+	fullscreens = 0;
+	for(f=v->floating->frame; f; f=f->anext)
+		if(f->client->fullscreen >= 0)
+			fullscreens |= 1 << f->client->fullscreen;
 
 	foreach_column(v, s, a) {
 		if(ap && ap->screen != s)
 			ap = nil;
+
+		if(fullscreens & (1 << s))
+			continue;
 
 		d = getdiv(&dp);
 		d->left = ap;
