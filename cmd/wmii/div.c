@@ -51,37 +51,41 @@ div_set(Divide *d, int x) {
 	mapraisewin(d->w);
 }
 
+void div_map_all(bool map) {
+	Divide **dp, *d;
+	int (*mapfunc)(Window*);
+
+	if (map)
+		mapfunc = &mapwin;
+	else
+		mapfunc = &unmapwin;
+
+	dp = &divs;
+
+	for(d = *dp; d; d = d->next) {
+		/* Force map/unmap by letting it think it has the opposite state */
+		d->w->unmapped = map;
+		d->w->mapped = !map;
+		(*mapfunc)(d->w);
+	}
+}
+
 void
 div_update_all(void) {
 	Divide **dp, *d;
 	Area *a, *ap;
 	View *v;
-	Frame *f;
 	int s;
-	ulong fullscreens;
 
 	v = selview;
 	dp = &divs;
 	ap = nil;
 
-	for(d = *dp; d; d = d->next) {
-		/* Force unmap */
-		d->w->unmapped = 0;
-		d->w->mapped = true;
-		unmapwin(d->w);
-	}
-
-	fullscreens = 0;
-	for(f=v->floating->frame; f; f=f->anext)
-		if(f->client->fullscreen >= 0)
-			fullscreens |= 1 << f->client->fullscreen;
+	div_map_all(false);
 
 	foreach_column(v, s, a) {
 		if(ap && ap->screen != s)
 			ap = nil;
-
-		if(fullscreens & (1 << s))
-			continue;
 
 		d = getdiv(&dp);
 		d->left = ap;
