@@ -291,10 +291,7 @@ area_focus(Area *a) {
 	f = a->sel;
 	old_a = v->sel;
 
-	if(a->floating)
-		div_map_all(false);
-	else
-		div_map_all(true);
+	div_map(!a->floating);
 
 	if(!a->floating && view_fullscreen_p(v, a->screen))
 		return;

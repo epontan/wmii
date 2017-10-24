@@ -42,17 +42,14 @@ div_set(Divide *d, int x) {
 	scrn = d->left ? d->left->screen : d->right->screen;
 
 	d->x = x;
-	if(x == selview->r[scrn].min.x || x == selview->r[scrn].max.x)
-		return;
-
 	r = Rect(x-1, selview->r[scrn].min.y, x+1, selview->r[scrn].max.y);
 
 	moveresizewin(d->w, r);
 	mapraisewin(d->w);
 }
 
-void div_map_all(bool map) {
-	Divide **dp, *d;
+void div_map(bool map) {
+	Divide *d;
 	int (*mapfunc)(Window*);
 
 	if (map)
@@ -60,9 +57,7 @@ void div_map_all(bool map) {
 	else
 		mapfunc = &unmapwin;
 
-	dp = &divs;
-
-	for(d = *dp; d; d = d->next) {
+	for(d = divs; d != divend; d = d->next) {
 		/* Force map/unmap by letting it think it has the opposite state */
 		d->w->unmapped = map;
 		d->w->mapped = !map;
@@ -81,25 +76,23 @@ div_update_all(void) {
 	dp = &divs;
 	ap = nil;
 
-	div_map_all(false);
+	div_map(false);
 
 	foreach_column(v, s, a) {
 		if(ap && ap->screen != s)
 			ap = nil;
 
-		d = getdiv(&dp);
-		d->left = ap;
-		d->right = a;
-		div_set(d, a->r.min.x);
-		ap = a;
+		if(!a->next || a->next->screen != s)
+			continue;
 
-		if(!a->next) {
-			d = getdiv(&dp);
-			d->left = a;
-			d->right = nil;
-			div_set(d, a->r.max.x);
-		}
+		d = getdiv(&dp);
+		d->left = a;
+		d->right = a->next;
+		div_set(d, a->r.max.x);
+		ap = a;
 	}
+
+	divend = *dp;
 }
 
 /* Div Handlers */

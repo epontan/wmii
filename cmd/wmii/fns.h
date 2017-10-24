@@ -124,8 +124,8 @@ void	column_resize(Area*, int);
 void	column_resizeframe(Frame*, Rectangle);
 void	column_settle(Area*);
 void	div_draw(Divide*);
+void	div_map(bool);
 void	div_set(Divide*, int x);
-void	div_map_all(bool);
 void	div_update_all(void);
 
 /* error.c */

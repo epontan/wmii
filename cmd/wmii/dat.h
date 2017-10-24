@@ -351,6 +351,7 @@ EXTERN Client	c_magic;
 EXTERN Client	c_root;
 EXTERN Client*	client;
 EXTERN Divide*	divs;
+EXTERN Divide*	divend;
 EXTERN Key*	key;
 EXTERN View*	selview;
 EXTERN View*	view;
