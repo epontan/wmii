@@ -148,6 +148,8 @@ class Events():
         except SocketError, e:
             if e.errno != BROKEN_PIPE:
                 raise
+        except KeyboardInterrupt:
+            sys.exit('\nInterrupt received. Exiting...\n\n')
         self.alive = False
 
     def bind(self, items={}, **kwargs):
