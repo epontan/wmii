@@ -212,12 +212,12 @@ mouse_resizecolframe(Frame *f, Align align) {
 	d = divs;
 	SET(a);
 	foreach_column(v, s, a) {
-		if(a == f->area)
+		if(a == f->area || d->next == NULL)
 			break;
 		d = d->next;
 	}
 
-	if(align & East)
+	if(align & East && d->next)
 		d = d->next;
 
 	scrn = (d->left ? d->left : d->right)->screen;
